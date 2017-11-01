@@ -1,4 +1,4 @@
-#! /opt/local/bin/bash
+#! /bin/bash
 #
 # provision.sh
 # Copyright (C) 2017 Ryan Mackenzie White <ryan.white@cern.ch>
@@ -13,9 +13,9 @@
 #source bin/variables.sh
 export __DEBUG=false
 export __USERS=false
-export __LOGGER_FILEPATH="junk"
-export __LOGGER_FILENAME="junk.log"
-export __SHARE_FILEPATH="/media/sf_vmshare"
+#export __LOGGER_FILEPATH="junk"
+#export __LOGGER_FILENAME="junk.log"
+export __SHARE_FILEPATH="/media/sf_vmshare/"
 export __HOSTS_FILENAME="hosts.txt"
 export __KEYS_FILENAME="keys.txt"
 export __HADOOP_VERSION="hadoop-2.7.4.tar.gz"
@@ -250,7 +250,7 @@ else
     # Better way is to store script state
     # run from init.d
     # Complete installation with users
-    ${__USERS}=true
+    __USERS=true
 fi
 ##################################################
 
@@ -330,19 +330,32 @@ logger "${info} ${ipaddr}  ${nodename}  ${THISHOST}"
 
 if [[ $__DEBUG == false ]]
 then
-    echo -e " " | sudo tee -a "/etc/network/interfaces"
-    echo -e "auto enp0s8" | sudo tee -a "/etc/network/interfaces"
-    echo -e "iface enp0s8 inet static" | sudo tee -a "/etc/network/interfaces"
-    echo -e "address ${ipaddr}" | sudo tee -a "/etc/network/interfaces"
-    echo -e "network ${networkcfg[2]}" | sudo tee -a "/etc/network/interfaces"  
-    echo -e "netmask ${networkcfg[3]}" | sudo tee -a "/etc/network/interfaces"
-
-    echo -e "${ipaddr}  ${nodename}" >> $__SHARE_FILEPATH/$__HOSTS_FILENAME
+    if [[ ${__OS} == "CentOS Linux" ]]
+    then
+        logger "${info} CentOS Linux network"
+        sudo perl -i -pe "s/BOOTPROTO=dhcp/BOOTPROTO=static/g" /etc/sysconfig/network-scripts/ifcfg-enp0s8
+        sudo perl -i -pe "s/ONBOOT=no/ONBOOT=yes/g" /etc/sysconfig/network-scripts/ifcfg-enp0s8
+        echo -e "IPADDR=${ipaddr}" | sudo tee -a "/etc/sysconfig/network-scripts/ifcfg-enp0s8"
+        echo -e "NETMASK=${networkcfg[3]}" | sudo tee -a "/etc/sysconfig/network-scripts/ifcfg-enp0s8"
+        echo -e "NETWORKING=yes" | sudo tee -a "/etc/sysconfig/network"
+        echo -e "HOSTNAME=${THISHOST}" | sudo tee -a "/etc/sysconfig/network"
+        echo -e "GATEWAY=${networkcfg[2]}" | sudo tee -a "/etc/sysconfig/network"
+    elif [[ ${__OS} == "Ubuntu" ]]
+    then
+        echo -e " " | sudo tee -a "/etc/network/interfaces"
+        echo -e "auto enp0s8" | sudo tee -a "/etc/network/interfaces"
+        echo -e "iface enp0s8 inet static" | sudo tee -a "/etc/network/interfaces"
+        echo -e "address ${ipaddr}" | sudo tee -a "/etc/network/interfaces"
+        echo -e "network ${networkcfg[2]}" | sudo tee -a "/etc/network/interfaces"  
+        echo -e "netmask ${networkcfg[3]}" | sudo tee -a "/etc/network/interfaces"
+    else 
+        logger "${error} Cannot configure network"
+    fi
+    echo -e "${networkcfg[1]}  ${networkcfg[0]}" | sudo tee -a $__SHARE_FILEPATH/$__HOSTS_FILENAME
     echo -e "${ipaddr}  ${nodename}  ${THISHOST}" | sudo tee -a "/etc/hosts"
     executor "sudo /etc/init.d/networking restart"
 else
     logger "${DEBUG} Configure the node: ${networkcfg[0]} ${networkcfg[1]}"
-    echo -e "${networkcfg[1]}  ${networkcfg[0]}" >> $__SHARE_FILEPATH/$__HOSTS_FILENAME
 fi
 
 ################################################

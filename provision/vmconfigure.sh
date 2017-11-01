@@ -31,8 +31,8 @@ NET_TYPE=$6
 NET_ADAPTER="82540EM"
 SHARE_PATH="/Users/rwhite/Downloads/vmshare"
 #IMAGE="mini.iso
-IMAGE="CentOS-7-x86_64-Minimal-1708.iso"
-#IMAGE="CentOS-7-x86_64-DVD-1708.iso"
+#IMAGE="CentOS-7-x86_64-Minimal-1708.iso"
+IMAGE="CentOS-7-x86_64-DVD-1708.iso"
 if [[ ${MODE} == 'create' ]]
 then
     VBoxManage createhd --filename "${VM_NAME}.vdi" --size ${STORAGE}
