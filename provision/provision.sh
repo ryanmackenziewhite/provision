@@ -12,7 +12,7 @@
 # Environment variables
 #source bin/variables.sh
 export __DEBUG=false
-export __USERS=false
+export __FINALIZE=false
 #export __LOGGER_FILEPATH="junk"
 #export __LOGGER_FILENAME="junk.log"
 export __SHARE_FILEPATH="/media/sf_vmshare/"
@@ -22,6 +22,7 @@ export __HADOOP_VERSION="hadoop-2.7.4.tar.gz"
 export __MEDIA="dvd"
 export __OS="Ubuntu"
 export __PKGMGR="apt-get"
+export __SETKEYS=false
 ##################################################
 
 ##################################################
@@ -51,6 +52,10 @@ then
 fi
 ##################################################
 
+if [[ $1 == '-k' || $1 == '--keys' ]]
+then
+    __SETKEYS=true
+fi
 
 ##################################################
 # Colors
@@ -112,7 +117,7 @@ fi
 # Users
 
 users=(
-#    "hadoopuser"
+    "hadoopuser"
     "hdfs"
     "yarn"
     "mapred"
@@ -133,7 +138,7 @@ languages=(
 
 # network
 # Debug
-if [[ $1 == '--debug' ]] 
+if [[ $1 == '--debug' || $1 == '-k' || $1 == '--keys' ]] 
 then
     if [[ "$#" -ne 3 ]]
     then
@@ -219,7 +224,12 @@ install_vim() {
 }
 
 install_jdk() {
-    executor "sudo ${__PKGMGR} install default-jdk"
+    if [[ ${__OS} == "CentOS Linux" ]]
+    then
+        executor "sudo ${__PKGMGR} install --disablerepo=extras,updates java-sdk"
+    else
+        executor "sudo ${__PKGMGR} install default-jdk"
+    fi
 }
 
 install_python() {
@@ -250,24 +260,64 @@ else
     # Better way is to store script state
     # run from init.d
     # Complete installation with users
-    __USERS=true
+    __FINALIZE=true
 fi
 ##################################################
 
+##################################################
+
+if [[ $__SETKEYS == true ]]
+then
+    logger "${info} ============================================ " 
+    logger "${info} set hosts"
+    sudo cat $__SHARE_FILEPATH/$__HOSTS_FILENAME | sudo tee -a /etc/hosts
+    
+    logger "${info} copy keys to slaves"
+    for user in ${users[@]}
+    do
+         sudo -u ${user} cat $__SHARE_FILEPATH/$__KEYS_FILENAME | tee -a /home/${user}/.ssh/authorized_keys
+    done
+    exit 0
+fi 
+    
+
+###################################################
 #################################################
 # User Accounts
 #################################################
 # Create the hadoopgroup
 
-if [[ ${__USERS} == true ]]
+if [[ ${__FINALIZE} == true ]]
 then
-    logger "{info} Setup users"
-    executor "sudo groupadd hadoop"
+    ###################################################
+    # Repository from local share drive
+    tmppath=$(echo $__SHARE_FILEPATH | perl -pe 's/\//\\\//g')
+    sudo perl -i -pe "s/\#baseurl=http:\/\/mirror.centos.org\/centos\/\$releasever/baseurl=file:$tmppath\/CentOS\//g" /etc/yum.repos.d/CentOS-Base.repo 
+    # Packages 
+    logger "${info} Install Packages"
+    for i in "${packages[@]}"
+    do
+        logger "${info} Installing ${i}"
+        ${i}
+    done
+
+    ##################################################
+
+    #################################################
+    # Languages
+    logger "${info} Install Languages"
+    for i in "${languages[@]}"
+    do
+        logger "${info} Installing ${i}"
+        ${i}
+    done
+
+    #################################################
+    # SSH KEYS
+    echo -e "${networkcfg[1]}  ${networkcfg[0]}" | sudo tee -a $__SHARE_FILEPATH/$__HOSTS_FILENAME   
 
     for user in ${users[@]}
     do
-        logger "${info} Create user account: ${user}"
-        executor "sudo useradd -m -G hadoop,vboxsf ${user}"
         logger "${info} Create keys for user ${user}" 
             if [[ $__DEBUG == false ]]
             then
@@ -277,6 +327,7 @@ then
             sudo -u ${user} cat /home/${user}/.ssh/authorized_keys | tee -a $__SHARE_FILEPATH/$__KEYS_FILENAME
         fi
     done
+    #################################################
 
     #################################################
     # Hadoop 
@@ -287,30 +338,18 @@ then
 
     executor "sudo -u hadoopuser tar -xzf $__SHARE_FILEPATH/$__HADOOP_VERSION --directory /home/hadoopuser/hadoop"
     ##################################################
+    # Create /etc/profile.d/hadoop.sh
+    sudo touch /etc/profile.d/hadoop_setup.sh
+    sudo echo -e "HADOOP_PREFIX=/path/to/hadoop" | sudo tee -a /etc/profile.d/hadoop_setup.sh
+    sudo echo -e "export HADOOP_PREFIX" | sudo tee -a /etc/profile.d/hadoop_setup.sh
+    sudo echo -e "JAVA_HOME=/usr" | sudo tee -a /etc/profile.d/hadoop_setup.sh
+    sudo echo -e "export JAVA_HOME" | sudo tee -a /etc/profile.d/hadoop_setup.sh
+
+    # Create the storage directories for hdfs, logs, etc...
     logger "${info} Completed Provisioning Process"
     exit 0
 fi
-##################################################
-# Packages 
-logger "${info} Install Packages"
-for i in "${packages[@]}"
-do
-    logger "${info} Installing ${i}"
-    ${i}
-done
 
-##################################################
-
-#################################################
-# Languages
-logger "${info} Install Languages"
-for i in "${languages[@]}"
-do
-    logger "${info} Installing ${i}"
-    ${i}
-done
-
-###################################################
 
 #################################################
 # Networking
@@ -340,6 +379,9 @@ then
         echo -e "NETWORKING=yes" | sudo tee -a "/etc/sysconfig/network"
         echo -e "HOSTNAME=${THISHOST}" | sudo tee -a "/etc/sysconfig/network"
         echo -e "GATEWAY=${networkcfg[2]}" | sudo tee -a "/etc/sysconfig/network"
+	
+	echo -e "${ipaddr}  ${nodename}  ${THISHOST}" | sudo tee -a "/etc/hosts"
+	executor "sudo /etc/init.d/network restart"
     elif [[ ${__OS} == "Ubuntu" ]]
     then
         echo -e " " | sudo tee -a "/etc/network/interfaces"
@@ -348,15 +390,29 @@ then
         echo -e "address ${ipaddr}" | sudo tee -a "/etc/network/interfaces"
         echo -e "network ${networkcfg[2]}" | sudo tee -a "/etc/network/interfaces"  
         echo -e "netmask ${networkcfg[3]}" | sudo tee -a "/etc/network/interfaces"
+	echo -e "${ipaddr}  ${nodename}  ${THISHOST}" | sudo tee -a "/etc/hosts"
+	executor "sudo /etc/init.d/networking restart"
     else 
         logger "${error} Cannot configure network"
     fi
-    echo -e "${networkcfg[1]}  ${networkcfg[0]}" | sudo tee -a $__SHARE_FILEPATH/$__HOSTS_FILENAME
-    echo -e "${ipaddr}  ${nodename}  ${THISHOST}" | sudo tee -a "/etc/hosts"
-    executor "sudo /etc/init.d/networking restart"
 else
     logger "${DEBUG} Configure the node: ${networkcfg[0]} ${networkcfg[1]}"
 fi
+
+logger "${info} Setup users"
+executor "sudo groupadd hadoop"
+executor "sudo usermod -aG vboxsf ${users[0]}"
+executor "sudo usermod -aG hadoop ${users[0]}"
+
+for user in ${users[@]}
+do
+    logger "${info} Create user account: ${user}"
+    exists="$(grep -c '^${user}:' /etc/passwd)"
+    if [[ $exists == 0 ]]
+    then
+	executor "sudo useradd -m -G hadoop,vboxsf ${user}"
+    fi
+done
 
 ################################################
 logger "${info} Completed initial provisioning, restarting"

@@ -12,7 +12,7 @@
 if [[ $1 == 'help' || $1 == '-h' || $1 == '--help' ]] 
 then
     echo "Usage:"
-    echo "./vmconfigure.sh <Mode> <VMName> <OS> <Storage> <RAM> <NETWORK TYPE>"
+    echo "./vmconfigure.sh <Mode> <VMName> <OS> <Storage> <RAM> <NETWORK TYPE> <SSH Port Forward>"
     echo "MODE"
     echo "create -- Creates initial VM"
     echo "finalize --  Sets boot order and attaches Guest Additions"
@@ -33,6 +33,20 @@ SHARE_PATH="/Users/rwhite/Downloads/vmshare"
 #IMAGE="mini.iso
 #IMAGE="CentOS-7-x86_64-Minimal-1708.iso"
 IMAGE="CentOS-7-x86_64-DVD-1708.iso"
+PF=$7
+
+if [[ ${OS_FLAVOR} == "Ubuntu_64" ]]
+then
+    IMAGE="mini.iso"
+elif
+    [[ ${OS_FLAVOR} == "CentOS_64" ]]
+then
+    IMAGE="CentOS-7-x86_64-DVD-1708.iso"
+else
+    echo -e "ERROR: OS not known"
+    exit 1
+fi
+
 if [[ ${MODE} == 'create' ]]
 then
     VBoxManage createhd --filename "${VM_NAME}.vdi" --size ${STORAGE}
@@ -58,9 +72,9 @@ then
     fi
     VBoxManage modifyvm ${VM_NAME} --cableconnected1 on
     VBoxManage modifyvm ${VM_NAME} --natdnshostresolver1 on
-    VBoxManage modifyvm ${VM_NAME} --natpf1 "guestssh,tcp,,2222,,22"
+    VBoxManage modifyvm ${VM_NAME} --natpf1 "guestssh,tcp,,${PF},,22"
     VBoxManage modifyvm ${VM_NAME} --nic2 hostonly --nictype2 ${NET_ADAPTER} --hostonlyadapter2 "vboxnet0"
-    VBoxManage modifyvm ${VM_NAME} --cableconnected1 on
+    VBoxManage modifyvm ${VM_NAME} --cableconnected2 on
     VBoxManage sharedfolder add ${VM_NAME} --name vmshare --hostpath ${SHARE_PATH} --automount
     VBoxManage startvm ${VM_NAME}
 elif [[ ${MODE} == "finalize" ]]
