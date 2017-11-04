@@ -18,7 +18,8 @@ export __FINALIZE=false
 export __SHARE_FILEPATH="/media/sf_vmshare/"
 export __HOSTS_FILENAME="hosts.txt"
 export __KEYS_FILENAME="keys.txt"
-export __HADOOP_VERSION="hadoop-2.7.4.tar.gz"
+export __HADOOP_VERSION="hadoop-2.7.4"
+export __HADOOP_PATH="/opt/hadoop"
 export __MEDIA="dvd"
 export __OS="Ubuntu"
 export __PKGMGR="apt-get"
@@ -115,8 +116,9 @@ fi
 ##################################################
 # Configuration
 # Users
-
+# hadoop must be first, creates group for remaining hadoop 
 users=(
+    "hadoop"   
     "hadoopuser"
     "hdfs"
     "yarn"
@@ -314,7 +316,8 @@ then
 
     #################################################
     # SSH KEYS
-    echo -e "${networkcfg[1]}  ${networkcfg[0]}" | sudo tee -a $__SHARE_FILEPATH/$__HOSTS_FILENAME   
+    echo -e "${networkcfg[1]}  ${networkcfg[0]}" | sudo tee -a $__SHARE_FILEPATH/$__HOSTS_FILENAME  
+    echo -e "${networkcfg[0]}" | sudo tee -a $__SHARE_FILEPATH/slaves   
 
     for user in ${users[@]}
     do
@@ -331,22 +334,37 @@ then
 
     #################################################
     # Hadoop 
-    if [[ ! -d /home/hadoopuser/hadoop ]]
+    if [[ ! -d $__HADOOP_PATH ]]
     then
-            executor "sudo -u hadoopuser mkdir /home/hadoopuser/hadoop"
+            executor "sudo mkdir $__HADOOP_PATH"
     fi	
 
-    executor "sudo -u hadoopuser tar -xzf $__SHARE_FILEPATH/$__HADOOP_VERSION --directory /home/hadoopuser/hadoop"
+    executor "sudo tar -xzf $__SHARE_FILEPATH/$__HADOOP_VERSION.tar.gz --directory $__HADOOP_PATH"
+    executor "sudo chown -R hadoop:hadoop $__HADOOP_PATH/$__HADOOP_VERSION"
     ##################################################
     # Create /etc/profile.d/hadoop.sh
     sudo touch /etc/profile.d/hadoop_setup.sh
-    sudo echo -e "HADOOP_PREFIX=/path/to/hadoop" | sudo tee -a /etc/profile.d/hadoop_setup.sh
+    sudo echo -e "HADOOP_PREFIX=$__HADOOP_PATH/$__HADOOP_VERSION" | sudo tee -a /etc/profile.d/hadoop_setup.sh
     sudo echo -e "export HADOOP_PREFIX" | sudo tee -a /etc/profile.d/hadoop_setup.sh
     sudo echo -e "JAVA_HOME=/usr" | sudo tee -a /etc/profile.d/hadoop_setup.sh
     sudo echo -e "export JAVA_HOME" | sudo tee -a /etc/profile.d/hadoop_setup.sh
 
+    echo -e "export PATH=$PATH:$__HADOOP_PATH/$__HADOOP_VERSION/$__HADOOP_PATH/bin:$__HADOOP_PATH/$__HADOOP_VERSION/sbin" | sudo tee -a /etc/environment
+    
+    # Create the storage directories
+    # Do we need to create 1...n for datanode and add these directories?
+    if [[ ${nodename} == "master" ]]
+    then
+        sudo mkdir -p /data/dfs/nn
+        sudo chown -R hdfs:hdfs /data/dfs/nn
+    else
+        sudo mkdir -p /data/dfs/dn
+        sudo chown -R hdfs:hdfs /data/dfs/dn
+    fi
+
     # Create the storage directories for hdfs, logs, etc...
     logger "${info} Completed Provisioning Process"
+
     exit 0
 fi
 
@@ -400,17 +418,24 @@ else
 fi
 
 logger "${info} Setup users"
-executor "sudo groupadd hadoop"
-executor "sudo usermod -aG vboxsf ${users[0]}"
-executor "sudo usermod -aG hadoop ${users[0]}"
 
 for user in ${users[@]}
 do
     logger "${info} Create user account: ${user}"
-    exists="$(grep -c '^${user}:' /etc/passwd)"
-    if [[ $exists == 0 ]]
+    exists=$(grep -c "^${user}:" /etc/passwd)
+    if [[ ${exists} == 0 ]]
     then
-	executor "sudo useradd -m -G hadoop,vboxsf ${user}"
+        logger "${info} Create ${user}"
+        if [[ ${user} == "hadoop" ]]
+        then
+            executor "sudo useradd -m -G vboxsf ${user}"
+        else
+	    executor "sudo useradd -m -G hadoop,vboxsf ${user}"
+        fi
+    else
+        logger "${info} Modify groups for ${user}"
+        executor "sudo usermod -aG vboxsf ${user}"
+        executor "sudo usermod -aG hadoop ${user}"
     fi
 done
 
