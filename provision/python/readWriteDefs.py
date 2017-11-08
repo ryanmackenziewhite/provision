@@ -1,22 +1,22 @@
 import xml.etree.ElementTree as ET
 
-with open("definitions.ini", "a") as f:
-    tree = ET.parse("yarn-default.xml")
+with open("configSlave.ini", "a") as f:
+    tree = ET.parse("yarn-site.xml")
     for elem in tree.iter():
-        if elem.tag == "name":
-            f.write(elem.text + "::yarn-site.xml" + "\n")
+        if elem.tag == "property":
+            f.write(elem[0].text + "::" + elem[1].text + "\n")
         
-    tree = ET.parse("core-default.xml")
+    tree = ET.parse("core-site.xml")
     for elem in tree.iter():
-        if elem.tag == "name":
-            f.write(elem.text + "::core-site.xml" + "\n")
+        if elem.tag == "property":
+            f.write(elem[0].text + "::" + elem[1].text + "\n")
     
-    tree = ET.parse("hdfs-default.xml")
+    tree = ET.parse("hdfs-site.xml")
     for elem in tree.iter():
-        if elem.tag == "name":
-            f.write(elem.text + "::hdfs-site.xml" + "\n")
+        if elem.tag == "property":
+            f.write(elem[0].text + "::" + elem[1].text + "\n")
     
-    tree = ET.parse("mapred-default.xml")
+    tree = ET.parse("mapred-site.xml")
     for elem in tree.iter():
-        if elem.tag == "name":
-            f.write(elem.text + "::mapred-site.xml" + "\n")
+        if elem.tag == "property":
+            f.write(elem[0].text + "::" + elem[1].text + "\n")

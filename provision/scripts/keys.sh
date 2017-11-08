@@ -16,8 +16,9 @@ do
     then
         sudo -u ${user} ssh-keygen -t rsa -P '' -f /home/${user}/.ssh/id_rsa
         sudo -u ${user} cat /home/${user}/.ssh/id_rsa.pub | sudo -u ${user} tee -a /home/${user}/.ssh/authorized_keys
-        sudo -u ${user} chmod 0600 /home/${user}/.ssh/authorized_keys
-        sudo -u ${user} cat /home/${user}/.ssh/authorized_keys | tee -a $__SHARE_FILEPATH/$__KEYS_FILENAME
+       echo -e "Host *" | sudo -u ${user} tee -a /home/${user}/.ssh/config
+       echo -e "    StrictHostKeyChecking no" | sudo -u ${user} tee -a /home/${user}/.ssh/config
+       sudo chmod 0400 /home/${user}/.ssh/config
     fi
 done
 

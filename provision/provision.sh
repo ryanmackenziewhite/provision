@@ -64,24 +64,7 @@ then
     __SETKEYS=true
 fi
 
-##################################################
-# Colors
-# colors for interactive
-red='\e[0;31m'
-green='\e[0;32m'
-yellow='\e[1;33m'
-cyan='\e[0;36m'
-nc='\e[0m'
-
-reset=${nc}
-debug="${yellow} DEBUG: ${reset}" 
-warn="${yellow} WARNING: ${reset}" 
-success="${green} SUCCESS: ${reset}"
-error="${red} ERROR: ${reset}"
-question="${cyan} Question: ${reset}"
-info="${cyan} INFO: ${reset}"
-##################################################
-
+source $__APP_BASEPATH/config/config.sh
 
 ##################################################
 # Utilities
@@ -97,30 +80,10 @@ if [[ ! $__LOGGER_FILENAME ]]; then
     __LOGGER_FILENAME="provision.log"
 fi
 
-source $__APP_BASEPATH/scripts/logger.sh
+source $__APP_BASEPATH/scripts/utilities.sh
 logger "${info} Base Path: $__APP_BASEPATH"
 #################################################
 
-##################################################
-# Configuration
-# Users
-# hadoop must be first, creates group for remaining hadoop 
-users=(
-    "hadoop"   
-    "hadoopuser"
-    "hdfs"
-    "yarn"
-    "mapred"
-)
-
-# Packages
-declare -A packages
-packages=(
-    ["ssh"]=install_ssh
-    ["vim"]=install_vim
-    ["jdk"]=install_jdk
-    ["python"]=install_python
-)
 
 # network
 # Debug
@@ -143,13 +106,6 @@ else
     nodename=$1
     ipaddr=$2
 fi
-    
-networkcfg=(
-    ${nodename}
-    ${ipaddr}
-    "192.168.56.1"
-    "255.255.255.0"
-)
 
 if [[ -f "/etc/os-release" ]]
 then
@@ -160,6 +116,10 @@ then
         __PKGMGR="yum"
     fi
 fi
+
+# Start Provision Process
+logger "${info} Read configuration"
+source $__APP_BASEPATH/config/config.sh
 
 logger "${info} OS Version: $__OS"
 logger "${info} Install via ${__PKGMGR}"
@@ -179,20 +139,21 @@ do
 done
 ################################################
 
-# Pass sudo command
-# $ param str Command
-executor() {
-    COMMAND="$@"
-    if [[ $__DEBUG == true ]]; then
-        logger "${debug} $@"
-    else
-        logger "${info} Execute $@"
-        ${COMMAND[@]} 
-    fi
-}
-
-################################################
-
+if [[ $__SETKEYS == true ]]
+then
+    logger "${info} ============================================ " 
+    logger "${info} set hosts"
+    sudo cat $__SHARE_FILEPATH/$__HOSTS_FILENAME | sudo tee -a /etc/hosts
+    
+    logger "${info} copy keys to slaves"
+    for user in ${users[@]}
+    do
+         sudo -u ${user} cp $__SHARE_FILEPATH/$__KEYS_FILENAME /home/${user}/.ssh/authorized_keys
+         sudo -u ${user} chmod 0600 /home/${user}/.ssh/authorized_keys
+         sudo -u ${user} cat 
+    done
+    exit 0
+fi 
 ##################################################
 if [[ ! -d ${__SHARE_FILEPATH} ]]
 then 
@@ -237,18 +198,5 @@ fi
 
 ##################################################
 
-if [[ $__SETKEYS == true ]]
-then
-    logger "${info} ============================================ " 
-    logger "${info} set hosts"
-    sudo cat $__SHARE_FILEPATH/$__HOSTS_FILENAME | sudo tee -a /etc/hosts
-    
-    logger "${info} copy keys to slaves"
-    for user in ${users[@]}
-    do
-         sudo -u ${user} cat $__SHARE_FILEPATH/$__KEYS_FILENAME | tee -a /home/${user}/.ssh/authorized_keys
-    done
-    exit 0
-fi 
 
 exit 0
