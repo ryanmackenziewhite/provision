@@ -1,0 +1,151 @@
+---
+# Following taken from KickStart
+- name: install the 'Gnome desktop' environment group
+  become: true
+  yum: 
+    name: "@^gnome-desktop-environment"
+    state: present
+
+- name: install the 'base' package group
+  become: true
+  yum: 
+    name: "@base"
+    state: present
+
+- name: install the 'core' package group
+  become: true
+  yum: 
+    name: "@core"
+    state: present
+
+- name: install the 'desktop-debugging' package group
+  become: true
+  yum: 
+    name: "@desktop-debugging"
+    state: present
+
+- name: install the 'development' package group
+  become: true
+  yum: 
+    name: "@development" 
+    state: present
+
+- name: install the 'dial-up' package group
+  become: true
+  yum: 
+    name: "@dial-up" 
+    state: present
+
+- name: install the 'directory-client' package group
+  become: true
+  yum: 
+    name: "@directory-client" 
+    state: present
+
+- name: install the 'fonts' package group
+  become: true
+  yum: 
+    name: "@fonts" 
+    state: present
+
+- name: install the 'gnome desktop' package group
+  become: true
+  yum: 
+    name: "@gnome-desktop" 
+    state: present
+
+- name: install the 'guest-agents' package group
+  become: true
+  yum: 
+    name: "@guest-agents" 
+    state: present
+
+- name: install the 'guest-desktop-agents' package group
+  become: true
+  yum: 
+    name: "@guest-desktop-agents" 
+    state: present
+
+- name: install the 'input-methods' package group
+  become: true
+  yum: 
+    name: "@input-methods" 
+    state: present
+
+- name: install the 'internet-applications' package group
+  become: true
+  yum: 
+    name: "@internet-applications" 
+    state: present
+
+- name: install the 'internet-browser' package group
+  become: true
+  yum: 
+    name: "@internet-browser" 
+    state: present
+
+- name: install the 'java-platform' package group
+  become: true
+  yum: 
+    name: "@java-platform" 
+    state: present
+
+- name: install the 'multimedia' package group
+  become: true
+  yum: 
+    name: "@multimedia" 
+    state: present
+
+- name: install the 'network filesystem client' package group
+  become: true
+  yum: 
+    name: "@network-file-system-client" 
+    state: present
+
+- name: install 'office-suite' group
+  become: true
+  yum: 
+    name: "@office-suite" 
+    state: present
+
+- name: install 'print-client' group
+  become: true
+  yum: 
+    name: "@print-client" 
+    state: present
+
+- name: install 'security-tools' group
+  become: true
+  yum: 
+    name: "@security-tools" 
+    state: present
+
+- name: install 'system-admin-tools' group
+  become: true
+  yum: 
+    name: "@system-admin-tools" 
+    state: present
+
+- name: install X11
+  become: true
+  yum: 
+    name: "@x11" 
+    state: present
+
+- name: install chrony
+  become: true
+  yum: 
+    name: chrony 
+    state: present
+
+- name: install kexec-tools
+  become: true
+  yum: 
+    name: kexec-tools 
+    state: present
+
+- name: upgrade all packages
+  become: true
+  yum:
+    name: '*'
+    state: latest
