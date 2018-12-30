@@ -1,0 +1,11 @@
+---
+# user defined variables
+pyenv_python_versions:
+  - 3.6.5
+  - 3.6.8
+pyenv_virtual_envs:
+  - { venv_name: "default_v3", py_version: "3.6.5"}
+  - { venv_name: "latest_v36", py_version: "3.6.8"}  
+pyenv_global: "system"
+pyenv_update: yes
+pyenv_update_git_install: yes

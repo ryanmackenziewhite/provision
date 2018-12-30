@@ -1,0 +1,6 @@
+---
+
+- name: install pyenv build 
+  become: true
+  yum:
+    name: "{{ pyenv_redhat_packages }}"
