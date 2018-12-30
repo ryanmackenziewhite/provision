@@ -1,4 +1,7 @@
 ---
+- include: RedHat.yml
+  when: ansible_os_family == "RedHat"
+
 - name: install epel
   become: true
   yum: name=epel-release state=present
@@ -11,4 +14,8 @@
   become: true
   yum: name=gnucash state=present
 
-
+- name: install arrow development packages
+  become: true
+  yum: 
+    name: "{{arrow_redhat_packages}}" 
+    state: present
