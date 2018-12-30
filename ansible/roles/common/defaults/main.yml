@@ -1,0 +1,6 @@
+---
+# defaults for common packages
+arrow_redhat_packages:
+  - cmake
+  - jemalloc
+  - boost
