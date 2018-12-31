@@ -1,14 +1,34 @@
 ---
-- include: RedHat.yml
-  when: ansible_os_family == "RedHat"
+- include: SL7.yml
+  when: ansible_distribution == "Scientific Linux"
+
+- include: Fedora.yml
+  when: ansible_distribution == "Fedora"
 
 - name: install epel
   become: true
   yum: name=epel-release state=present
+  when: ansible_distribution == "Scientific Linux"
 
-- name: install xfce
+- name: install xfce-desktop
   become: true
-  yum: name="@^xfce" state=present
+  yum: name="@xfce-desktop" state=present
+
+- name: install xfce-apps
+  become: true
+  yum: name="@xfce-apps" state=present
+
+- name: install xfce-extra-plugins
+  become: true
+  yum: name="@xfce-extra-plugins" state=present
+
+- name: install xfce-media
+  become: true
+  yum: name="@xfce-media" state=present
+
+- name: install xfce-office
+  become: true
+  yum: name="@xfce-office" state=present
 
 - name: install xfce-extras
   become: true

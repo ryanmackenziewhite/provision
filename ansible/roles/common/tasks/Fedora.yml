@@ -1,0 +1,19 @@
+---
+- name: install networkmanager-submodules
+  become: true
+  yum: name="@networkmanager-submodules" state=present
+
+- name: install vim
+  become: true
+  yum: 
+    name:
+      - vim-common
+      - vim-enhanced
+      - vim-filesystem
+    state: present
+
+- name: install 'Audio Production' package group
+  become: true
+  yum:
+    name: "@Audio Production"
+    state: present
