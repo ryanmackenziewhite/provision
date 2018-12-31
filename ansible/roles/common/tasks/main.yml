@@ -10,6 +10,17 @@
   become: true
   yum: name="@^xfce" state=present
 
+- name: install xfce-extras
+  become: true
+  yum:
+    name: 
+      - xfce4-cpufreq-plugin
+      - xfce4-systemload-plugin
+
+- name: install audacity
+  become: true
+  yum: name=audacity state=present
+
 - name: install gnucash
   become: true
   yum: name=gnucash state=present
