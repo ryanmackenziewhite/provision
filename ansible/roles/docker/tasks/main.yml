@@ -1,0 +1,15 @@
+---
+
+- name: Install docker
+  dnf: name=docker state=present
+  when: ansible_distribution == "Fedora"
+
+- name: enable docker
+  service: enabled=yes name=docker
+  when: ansible_distribution == "Fedora"
+
+- name: start docker
+  service:
+    name=docker
+    state=restarted
+  when: ansible_distribution == "Fedora"

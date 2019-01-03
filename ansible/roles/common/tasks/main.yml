@@ -10,43 +10,70 @@
   yum: name=epel-release state=present
   when: ansible_distribution == "Scientific Linux"
 
+- name: install vim-common
+  become: true
+  action: >
+    {{ ansible_pkg_mgr }} name=vim-common state=present
+
+- name: install vim-enhanced
+  become: true
+  action: >
+    {{ ansible_pkg_mgr }} name=vim-enhanced state=present
+
+- name: install vim-filesystem
+  become: true
+  action: >
+    {{ ansible_pkg_mgr }} name=vim-filesystem state=present
+
 - name: install xfce-desktop
   become: true
-  yum: name="@xfce-desktop" state=present
+  action: >
+    {{ ansible_pkg_mgr }} name="@xfce-desktop" state=present
 
 - name: install xfce-apps
   become: true
-  yum: name="@xfce-apps" state=present
+  action: >
+    {{ ansible_pkg_mgr }} name="@xfce-apps" state=present
 
 - name: install xfce-extra-plugins
   become: true
-  yum: name="@xfce-extra-plugins" state=present
+  action: >
+    {{ ansible_pkg_mgr }} name="@xfce-extra-plugins" state=present
 
 - name: install xfce-media
   become: true
-  yum: name="@xfce-media" state=present
+  action: >
+    {{ ansible_pkg_mgr }} name="@xfce-media" state=present
 
 - name: install xfce-office
   become: true
-  yum: name="@xfce-office" state=present
+  action: >
+    {{ ansible_pkg_mgr }} name="@xfce-office" state=present
 
 - name: install xfce-extras
   become: true
-  yum:
-    name: 
-      - xfce4-cpufreq-plugin
-      - xfce4-systemload-plugin
-
-- name: install audacity
-  become: true
-  yum: name=audacity state=present
+  action: >
+    {{ ansible_pkg_mgr }} name= {{ item }} state=present
+  with_items: 
+    - xfce4-cpufreq-plugin
+    - xfce4-systemload-plugin
 
 - name: install gnucash
   become: true
-  yum: name=gnucash state=present
+  action: >
+    {{ ansible_pkg_mgr }} name=gnucash state=present
 
 - name: install arrow development packages
   become: true
-  yum: 
-    name: "{{arrow_redhat_packages}}" 
-    state: present
+  action: >
+    {{ ansible_pkg_mgr }} name= "{{ arrow_redhat_packages }}" state=present
+
+- name: install system updates for Fedora
+  become: true
+  dnf: name=* state=latest update_cache=yes
+  when: ansible_distribution == "Fedora"
+
+- name: install system updates for SL7
+  become: true
+  yum: name=* state=latest update_cache=yes
+  when: ansible_distribution == "Scientific Linux"
