@@ -25,39 +25,6 @@
   action: >
     {{ ansible_pkg_mgr }} name=vim-filesystem state=present
 
-- name: install xfce-desktop
-  become: true
-  action: >
-    {{ ansible_pkg_mgr }} name="@xfce-desktop" state=present
-
-- name: install xfce-apps
-  become: true
-  action: >
-    {{ ansible_pkg_mgr }} name="@xfce-apps" state=present
-
-- name: install xfce-extra-plugins
-  become: true
-  action: >
-    {{ ansible_pkg_mgr }} name="@xfce-extra-plugins" state=present
-
-- name: install xfce-media
-  become: true
-  action: >
-    {{ ansible_pkg_mgr }} name="@xfce-media" state=present
-
-- name: install xfce-office
-  become: true
-  action: >
-    {{ ansible_pkg_mgr }} name="@xfce-office" state=present
-
-- name: install xfce-extras
-  become: true
-  action: >
-    {{ ansible_pkg_mgr }} name= {{ item }} state=present
-  with_items: 
-    - xfce4-cpufreq-plugin
-    - xfce4-systemload-plugin
-
 - name: install gnucash
   become: true
   action: >
