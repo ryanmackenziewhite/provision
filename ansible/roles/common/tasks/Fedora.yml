@@ -11,5 +11,22 @@
   action: >
     {{ ansible_pkg_mgr }} name="@networkmanager-submodules" state=present update_cache=yes
 
+- name: install 'Development Tools' package group
+  become: true
+  dnf:
+    name: "@Development Tools"
+    state: present
 
+- name: install 'C Development Tools' package group
+  become: true
+  dnf:
+    name: "@C Development Tools and Libraries"
+    state: present
 
+- name: install arrow development packages
+  become: true
+  dnf:
+      name:
+        - jemalloc
+        - cmake
+        - boost-devel

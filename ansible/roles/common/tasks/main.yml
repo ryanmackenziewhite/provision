@@ -30,11 +30,6 @@
   action: >
     {{ ansible_pkg_mgr }} name=gnucash state=present
 
-- name: install arrow development packages
-  become: true
-  action: >
-    {{ ansible_pkg_mgr }} name= "{{ arrow_redhat_packages }}" state=present
-
 - name: install system updates for Fedora
   become: true
   dnf: name=* state=latest update_cache=yes
